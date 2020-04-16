@@ -12,7 +12,6 @@ var context, controller, rectangle, loop, update, draw, ctx, offCanvas, pixelRat
 var baseheight, basewidth, basescale, colors;
 
 
-
 /*
 ################
 CANVAS SETUP
