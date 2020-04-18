@@ -4,6 +4,52 @@
 
 /*
 ################
+INLINE RESOURCES
+################
+*/
+
+var listColors = [
+  "#000000", // 0 black
+  "#1D2B53", // 1 dark blues
+  "#7E2553", // 2 dark purple
+  "#008751", // 3 dark green
+  "#AB5236", // 4 brown
+  "#5F574F", // 5 dark grey
+  "#C2C3C7", // 6 light gray
+  "#FFF1E8", // 7 white
+  "#FF004D", // 8 red
+  "#FFA300", // 9 orange
+  "#FFEC27", // 10 yellow
+  "#00E436", // 11 green
+  "#29ADFF", // 12 blue
+  "#83769C", // 13 indigo
+  "#FF77A8", // 14 pink
+  "#FFCCAA" ,// 15 purple
+]
+
+var listColorsHex = [
+  0x000000, // 0 black
+  0x1D2B53, // 1 dark blues
+  0x7E2553, // 2 dark purple
+  0x008751, // 3 dark green
+  0xAB5236, // 4 brown
+  0x5F574F, // 5 dark grey
+  0xC2C3C7, // 6 light gray
+  0xFFF1E8, // 7 white
+  0xFF004D, // 8 red
+  0xFFA300, // 9 orange
+  0xFFEC27, // 10 yellow
+  0x00E436, // 11 green
+  0x29ADFF, // 12 blue
+  0x83769C, // 13 indigo
+  0xFF77A8, // 14 pink
+  0xFFCCAA, // 15 purple
+]
+
+
+
+/*
+################
 DECLARATIONS
 ################
 */
@@ -18,9 +64,11 @@ CANVAS SETUP
 ################
 */
 
-baseheight = 48;
-basewidth = 84;
-basescale = 6;
+//VIRTUAL RESOLUTION
+
+baseheight = 240;
+basewidth = 400;
+basescale = 1; //scaling factor
 targetheight = baseheight*basescale;
 targetwidth = basewidth*basescale;
 pixelRatio = 1.5;//window.devicePixelRatio;
@@ -34,6 +82,8 @@ offCanvas.style.imageRendering = "pixelated";
 ctx = offCanvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
+//ONSCREEN CANVAS
+
 context = document.querySelector("canvas").getContext("2d");
 context.canvas.height = targetheight * pixelRatio;
 context.canvas.style.height = '${targetheight}px'
@@ -41,8 +91,6 @@ context.canvas.width = targetwidth * pixelRatio;
 context.canvas.style.width = '${targetwidth}px'
 // context.scale(basescale*pixelRatio, basescale*pixelRatio);
 context.imageSmoothingEnabled = false;
-
-colors = ["#c7f0d8", "#43523d"];
 
 
 /*
@@ -67,7 +115,7 @@ var print = function(str, x, y) {
       ysheet = 48 + 8*Math.floor((char - 64)/16);
       xsheet = ((char - 64)%16)*8;
     };
-    ctx.drawImage(font_sheet,xsheet,ysheet,8,8,x+4*ii,y,8,8);
+    ctx.drawImage(font_sheet,xsheet,ysheet,8,8,x+8*ii,y,16,16);
   }
 };
 
@@ -182,10 +230,10 @@ var buildlevel = function(lev) {
 };
 
 
-var phoenix = {
-  height:8,
+var player = {
+  height:1,
   jumping:true,
-  width:8,
+  width:1,
   x:0, // center of the canvas
   x_velocity:0,
   x_draw:0,
@@ -193,7 +241,7 @@ var phoenix = {
   y_velocity:0,
   y_draw:0,
   dead: false,
-  speed: 1,
+  speed: 0.1,
   glow: false,
   flash: false,
   flashtime: 0,
@@ -212,7 +260,7 @@ class corpse {
 }
 
 
-thislevel = buildlevel(currentlevel);
+// thislevel = buildlevel(currentlevel);
 
 /*
 ################
@@ -222,218 +270,7 @@ UPDATE
 
 update = function() {
     
-    phoenix.x_velocity = 0;
     
-    
-    if (!phoenix.dead) {if (controller.up && phoenix.jumping == false) {
-        phoenix.y_velocity = -1.2;
-        phoenix.jumping = true;
-        beep.stop();
-        beep.play();
-    }
-
-    if (controller.left) {
-        phoenix.x_velocity = -0.5;
-    }
-
-    if (controller.right) {
-        phoenix.x_velocity = 0.5;
-    }}
-
-    if (controller.down) {
-      if (!phoenix.flash) {
-        let acorpse = new corpse(phoenix.x, phoenix.y);
-        corpselist.push(acorpse);
-        phoenix.dead=false;
-        beep.stop();
-        beep.play();
-        phoenix.flash = true;
-        phoenix.flashtime = timer + 10;
-        if (phoenix.jumping) {
-          phoenix.y_velocity = -1.2;
-        };
-        if (phoenix.glow) {
-          phoenix.glowtime = timer + 3;
-          phoenix.glow = false;
-          let b1 = getblock(phoenix.x+4+8,phoenix.y+4);
-          if (b1 == 9) {
-            setblock(phoenix.x+4+8,phoenix.y+4),0;
-          }
-          b1 = getblock(phoenix.x+4-8,phoenix.y+4);
-          if (b1 == 9) {
-            setblock(phoenix.x+4-8,phoenix.y+4),0;
-          }
-        }
-      }
-    };
-
-    phoenix.y_velocity += 0.06;// gravity
-    phoenix.x += phoenix.x_velocity;
-    phoenix.y += phoenix.y_velocity;
-    
-    if (phoenix.y_velocity > 0) {
-      let checkleft = getblock(phoenix.x+2, phoenix.y+8);
-      let checkright = getblock(phoenix.x+6, phoenix.y+8);
-      if (checkleft == 19) {checkleft = 8};
-      if (checkright == 19) {checkright = 8};
-      if ((checkleft > 0 & checkleft < 10) | (checkright > 0 & checkright < 10)) {
-        phoenix.y = Math.floor(phoenix.y/8)*8;
-        phoenix.jumping = false;
-        phoenix.y_velocity = 0;
-      }
-    };
-
-    if (phoenix.x_velocity > 0) {
-      let checkup = getblock(phoenix.x+7, phoenix.y+2);
-      let checkdown = getblock(phoenix.x+7, phoenix.y+6);
-      if (checkup == 19) {checkup = 8};
-      if (checkdown == 19) {checkdown = 8};
-      if ((checkup > 0 & checkup < 10) | (checkdown > 0 & checkdown < 10)) {
-        phoenix.x = Math.floor(phoenix.x/8)*8 + 2+ 1;
-        // phoenix.jumping = false;
-        phoenix.x_velocity = 0;
-      }
-    };
-
-    if (phoenix.x_velocity < 0) {
-      let checkup = getblock(phoenix.x, phoenix.y+2);
-      let checkdown = getblock(phoenix.x, phoenix.y+6);
-      if (checkup == 19) {checkup = 8};
-      if (checkdown == 19) {checkdown = 8};
-      if ((checkup > 0 & checkup < 10) | (checkdown > 0 & checkdown < 10)) {
-        phoenix.x = Math.floor(phoenix.x/8)*8 + 1;
-        // phoenix.jumping = false;
-        phoenix.x_velocity = 0;
-      }
-    };
-
-    if (phoenix.y_velocity < 0) {
-      let checkleft = getblock(phoenix.x+2, phoenix.y+1);
-      let checkright = getblock(phoenix.x+6, phoenix.y+1);
-      if (checkleft == 19) {checkleft = 8};
-      if (checkright == 19) {checkright = 8};
-      if ((checkleft > 0 & checkleft < 10) | (checkright > 0 & checkright < 10)) {
-        phoenix.y = Math.floor(phoenix.y/8)*8+8;
-        // phoenix.jumping = false;
-        phoenix.y_velocity = 0;
-      }
-    };
-
-    // if rectangle is falling below floor line
-    if (phoenix.y > 48 - 8) {
-      phoenix.jumping = false;
-      phoenix.y = 48 - 8;
-      phoenix.y_velocity = 0;
-    }
-
-    // if rectangle is going off the left of the screen
-    if (phoenix.x < 2) {
-      phoenix.x = 2;
-    } else if (phoenix.x > 82 - 8) {
-      phoenix.x = 82-8;
-    }
-
-    //phoenix cannot die if it is flashing or jumping
-    if (phoenix.flash) {
-      if (timer > phoenix.flashtime) {
-        if (!phoenix.jumping) {
-          phoenix.flash = false;
-        };
-      };
-    };
-
-    phoenix.x_draw = Math.floor(phoenix.x);
-    phoenix.y_draw = Math.floor(phoenix.y);
-
-    // did i beat the level?
-    let centerMass = getblock(phoenix.x+4,phoenix.y+4);
-
-    switch(centerMass) {
-      case 17:
-        currentlevel ++;
-        thislevel = buildlevel(currentlevel);
-      break;
-      case 18:
-        phoenix.dead = true;
-        setblock(phoenix.x+4,phoenix.y+4,0);
-      break;
-      case 21:
-        phoenix.dead = true;
-        setblock(phoenix.x+4,phoenix.y+4,0);
-      break;
-      case 20:
-        hitplate = true;
-      break;
-      case 22:
-        phoenix.glow = true;
-      break;
-    };
-
-    // update corpses
-
-    for (let i = 0; i < corpselist.length; i++) {
-      if (corpselist[i].jumping) {
-        corpselist[i].y += corpselist[i].y_velocity;
-        corpselist[i].y_velocity += 0.06;// gravity
-        let checkleft = getblock(corpselist[i].x+2, corpselist[i].y+8);
-        let checkright = getblock(corpselist[i].x+6, corpselist[i].y+8);
-        if ((checkleft > 0 & checkleft < 10) | (checkright > 0 & checkright < 10)) {
-          corpselist[i].y = Math.floor(corpselist[i].y/8)*8;
-          corpselist[i].jumping = false;
-          corpselist[i].y_velocity = 0;
-        }
-        // gotta check every other one to stack them!!
-        for (let ii = 0; ii < corpselist.length; ii++) {
-          if (ii != i) {
-            if ((corpselist[i].x + 7 > corpselist[ii].x) & (corpselist[i].x < corpselist[ii].x+7)) {
-              if ((corpselist[i].y <  corpselist[ii].y) & (corpselist[i].y+7 >  corpselist[ii].y)) {
-                corpselist[i].y = Math.floor(corpselist[i].y/8)*8;
-                corpselist[i].jumping = false;
-                corpselist[i].y_velocity = 0;
-              }
-            }
-          }
-        }
-      } else {
-        if ((phoenix.x + 7 > corpselist[i].x) & (phoenix.x < corpselist[i].x+7)) {
-            if ((phoenix.y <  corpselist[i].y) & (phoenix.y+8 >  corpselist[i].y)) {
-              if (phoenix.y_velocity > 0) {
-                phoenix.y = Math.floor(phoenix.y/8)*8;
-                phoenix.jumping = false;
-                phoenix.y_velocity = 0;
-              }
-            }
-          }
-        }
-
-      //check if i hit anything
-      let thisblock = getblock(corpselist[i].x+4,corpselist[i].y+4);
-      switch(thisblock) {
-        case 18:
-          setblock(corpselist[i].x+4,corpselist[i].y+4,0);
-        break;
-        case 21:
-          setblock(corpselist[i].x+4,corpselist[i].y+4,0);
-        break;
-        case 20:
-          hitplate = true;
-        break;
-      };
-
-      corpselist[i].x_draw = Math.floor(corpselist[i].x);
-      corpselist[i].y_draw = Math.floor(corpselist[i].y);
-    };
-
-    timer ++;
-    if (hitplate == true) {
-      plate = true;
-    }
-    if (plate) {
-      if (!hitplate) {
-        plate = false;
-      }
-    }
-    hitplate = false;
 
     }
 
@@ -444,97 +281,17 @@ DRAW
 */
 
 draw = function() {
-    ctx.fillStyle = colors[1];
-    ctx.fillRect(0, 0, 84, 48);// x, y, width, height
-    ctx.fillStyle = colors[0];
+
+    ctx.fillStyle = listColors[6];
+    ctx.fillRect(0, 0, 400, 240);// x, y, width, height
+    ctx.fillStyle = listColors[0];
     
 
-    // draw the level
-    // var thislevel = levels[currentlevel.toString()]
-    for (let row = 0; row < 6; row ++) {
-      for (let col = 0; col < 10; col ++) {
-        let ix = col + 10*row;
-        let x_sprite = (thislevel[ix]%16)*8;
-        let y_sprite = (Math.floor(thislevel[ix]/16)*8);
-        if (thislevel[ix] == 19) {
-          if (!plate) {
-            ctx.drawImage(sprite_sheet,x_sprite,y_sprite,8,8,2+col*8, row*8,8,8);  
-          }
-        } else {
-          ctx.drawImage(sprite_sheet,x_sprite,y_sprite,8,8,2+col*8, row*8,8,8);    
-        }
-      }
-    };
 
-
-    //draw the phoenix
-    if (!phoenix.dead) {
-      ctx.drawImage(sprite_sheet,0,16,8,8,phoenix.x_draw, phoenix.y_draw,8,8);
-    } else {
-      ctx.drawImage(sprite_sheet,0,8,8,8,phoenix.x_draw, phoenix.y_draw,8,8);
-    }
-    
-    if (phoenix.flash) {
-      if (timer % 4 > 1) {
-        ctx.beginPath();
-        ctx.lineWidth =  "1";
-        ctx.strokeStyle = colors[0];
-        ctx.rect(phoenix.x_draw-1.5, phoenix.y_draw-1.5, 10, 10);
-        ctx.stroke();
-      }
-    }
-    if (phoenix.glow) {
-      if (timer % 4 > 0) {
-        ctx.beginPath();
-        ctx.lineWidth =  "1";
-        ctx.strokeStyle = colors[0];
-        ctx.rect(phoenix.x_draw-3.5, phoenix.y_draw-3.5, 14, 14);
-        ctx.stroke();
-      }
-    }
-    if (phoenix.glowtime > timer) {
-      ctx.beginPath();
-      ctx.lineWidth =  "1";
-      ctx.strokeStyle = colors[0];
-      ctx.rect(phoenix.x_draw-6.5, phoenix.y_draw-6.5, 20, 20);
-      ctx.stroke();
+    print("Its Alive!", 11,12);
       
-    }
-
-
-    ctx.fillStyle = colors[0];
-
-    //draw corpses
-    for (let i = 0; i < corpselist.length; i++) {
-      ctx.drawImage(sprite_sheet,8,0,8,8,corpselist[i].x_draw, corpselist[i].y_draw,8,8);
-    }
-
-    
-
-    ctx.font = "8px Arial";
-    // ctx.fillStyle = "red";
-    ctx.textAlign = "left";
-    
-    
-    // print("it is alive", 12,28);
-    // print("it is alive", 12,40);
-
-    if (currentlevel == 1) {
-
-      print("Phoenix Escape", 8,12);
-      print("by palo blanco", 8,22);
-
-    }
-
-    if (currentlevel == 15) {
-
-      print("you escaped", 11,12);
-      print("nokiajam2", 11,22);
-
-    }
-    
     // context.scale(basescale*pixelRatio, basescale*pixelRatio);
-    context.drawImage(offCanvas,0,0,pixelRatio*basescale*84,pixelRatio*basescale*48);
+    context.drawImage(offCanvas,0,0,pixelRatio*basescale*400,pixelRatio*basescale*240);
     // context.scale(1, 1);
 
     
