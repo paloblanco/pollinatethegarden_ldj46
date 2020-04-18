@@ -106,14 +106,14 @@ let scene;
 let mesh;
 
 // OFFSCREEN TARGET FOR 3D drawing
-const rtWidth = 400;
-const rtHeight = 240;
-const renderTarget = new THREE.WebGLRenderTarget(rtWidth, rtHeight);
+threeCanvas = document.createElement("canvas");
+threeCanvas.width = basewidth;
+threeCanvas.height = baseheight;
+threeCanvas.style.imageRendering = "pixelated";
+ctxThree = offCanvas.getContext("2d");
+ctxThree.imageSmoothingEnabled = false;
 
 function init() {
-    // Get a reference to the container element that will hold our scene
-    // container = document.querySelector( '#container' );
-    // container = document.querySelector( '#container' );
 
     // create a Scene
     scene = new THREE.Scene();
@@ -130,14 +130,15 @@ function init() {
 
     // every object is initially created at ( 0, 0, 0 )
     // we'll move the camera back a bit so that we can view the scene
-    camera.position.set( 0, 0, 10 );
+    camera.position.set( 0, -7, 0 );
+    camera.lookAt(0,0,0);
     // the above line is equivalent to doing the following:
     // camera.position.x = 0;
     // camera.position.y = 0;
     // camera.position.z = 10;
 
     // create a geometry
-    const geometry = new THREE.BoxBufferGeometry( 2, 2, 2 );
+    const geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 
     // create a purple Basic material
     const material = new THREE.MeshStandardMaterial( { color: listColorsHex[2] } );
@@ -156,20 +157,15 @@ function init() {
     const light = new THREE.DirectionalLight(0xffffff, 5.0);
 
     //move the light, since its default position is 000
-    light.position.set(0,3,3);
+    light.position.set(0,-3,3);
 
     //add the light to the scene
     scene.add(light);
 
     // create a renderer
-    renderer = new THREE.WebGLRenderer({antialias: true});
-
+    renderer = new THREE.WebGLRenderer({antialias: false});
     renderer.setSize( basewidth, baseheight );
-    // renderer.setPixelRatio( window.devicePixelRatio );
 
-    // add the automatically created <canvas> element to the page
-    // container.appendChild( renderer.domElement );
-    // renderer.setRenderTarget(ctx);
 }
 
 init();
@@ -352,6 +348,23 @@ UPDATE
 */
 
 update = function() {
+
+  // move the camera
+
+  if (controller.up) {
+    camera.position.y += 0.05;
+  };
+  if (controller.down) {
+    camera.position.y += -0.05;
+  };
+  if (controller.right) {
+    camera.position.x += 0.05;
+  };
+  if (controller.left) {
+    camera.position.x += -0.05;
+  };
+  
+  
   // animate our cube a little bit
   mesh.rotation.z += 0.01;
   mesh.rotation.y += 0.01;
@@ -375,6 +388,11 @@ draw = function() {
     ctx.fillStyle = listColors[6];
     // ctx.fillRect(0, 0, 400, 240);// x, y, width, height
     ctx.fillStyle = listColors[0];
+
+    renderer.render( scene, camera );
+    
+
+    ctx.drawImage(renderer.domElement,0,0,400,240);
     
 
 
@@ -387,12 +405,7 @@ draw = function() {
     // render, or 'create a still image', of the scene
     // this will create one still image / frame each time the animate
     // function calls itself
-    renderer.render( scene, camera );
-
     
-    // context.scale(1, 1);
-
-    context.drawImage(renderer.domElement,0,0,pixelRatio*basescale*400,pixelRatio*basescale*240);
 
     context.drawImage(offCanvas,0,0,pixelRatio*basescale*400,pixelRatio*basescale*240);
 
@@ -404,28 +417,6 @@ draw = function() {
 MAIN LOOP
 ################
 */
-
-
-
-animate = function() {
-  // call animate recursively
-  requestAnimationFrame( animate );
-
-  // animate our cube a little bit
-  mesh.rotation.z += 0.01;
-  mesh.rotation.y += 0.01;
-  mesh.rotation.x += 0.01;
-
-  mesh2.rotation.z += 0.01;
-  mesh2.rotation.y += 0.01;
-  mesh2.rotation.x += 0.01;
-
-  // render, or 'create a still image', of the scene
-  // this will create one still image / frame each time the animate
-  // function calls itself
-  renderer.render( scene, camera );
-}
-
 
 
 loop = function() {
