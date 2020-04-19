@@ -118,7 +118,7 @@ function init() {
     // create a Scene
     scene = new THREE.Scene();
     // set the background color
-    scene.background = new THREE.Color(listColorsHex[12]);
+    scene.background = new THREE.Color(listColorsHex[9]);
 
     //make the camera
     // Create a Camera
@@ -130,8 +130,8 @@ function init() {
 
     // every object is initially created at ( 0, 0, 0 )
     // we'll move the camera back a bit so that we can view the scene
-    camera.position.set( 0, -7, 0 );
-    camera.lookAt(0,0,0);
+    camera.position.set( 10, 3, 3 );
+    camera.lookAt(10,10,3);
     // the above line is equivalent to doing the following:
     // camera.position.x = 0;
     // camera.position.y = 0;
@@ -139,31 +139,51 @@ function init() {
 
     // create a geometry
     const geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+    const geoFloor = new THREE.BoxBufferGeometry( 60, 60, 1 );
 
     // create a purple Basic material
-    const material = new THREE.MeshStandardMaterial( { color: listColorsHex[2] } );
-    const material2 = new THREE.MeshBasicMaterial( { color: listColorsHex[2] } );
+    const material = new THREE.MeshStandardMaterial( { color: listColorsHex[12] } );
+    const material2 = new THREE.MeshStandardMaterial( { color: listColorsHex[3] } );
 
     // create a Mesh containing the geometry and material
     mesh = new THREE.Mesh( geometry, material );
-    mesh2 = new THREE.Mesh( geometry, material2 );
+    mesh2 = new THREE.Mesh( geoFloor, material2 );
 
     // add the mesh to the scene
     scene.add( mesh );
     scene.add( mesh2 );
-    mesh2.position.set(3,0,0);
+    mesh.position.set(10,10,1.5);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh2.position.set(30,30,0.5);
+    mesh2.castShadow = true;
+    mesh2.receiveShadow = true;
 
     //add a light to the scene
-    const light = new THREE.DirectionalLight(0xffffff, 5.0);
+    // const light = new THREE.DirectionalLight(0xffffff, 1.0);
+    //Create a PointLight and turn on shadows for the light
+    var light = new THREE.PointLight( 0xffffff, 1, 100 );
+    light.position.set( 10, 10, 30 );
+    light.castShadow = true;            // default false
+    scene.add( light );
+
+    //Set up shadow properties for the light
+    light.shadow.mapSize.width = 512;  // default
+    light.shadow.mapSize.height = 512; // default
+    light.shadow.camera.near = 0.5;       // default
+    light.shadow.camera.far = 500      // default
 
     //move the light, since its default position is 000
-    light.position.set(0,-3,3);
+    // light.position.set(2,-3,4);
 
     //add the light to the scene
+    var light = new THREE.AmbientLight( 0x606060 ); // soft white light
     scene.add(light);
 
     // create a renderer
     renderer = new THREE.WebGLRenderer({antialias: false});
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
     renderer.setSize( basewidth, baseheight );
 
 }
@@ -313,12 +333,12 @@ var player = {
   height:1,
   jumping:true,
   width:1,
-  x:0, // center of the canvas
+  x:10, 
   x_velocity:0,
-  x_draw:0,
-  y:0,
+  y:10,
   y_velocity:0,
-  y_draw:0,
+  z:1.5,
+  z_velocity:0,
   dead: false,
   speed: 0.1,
   glow: false,
@@ -352,27 +372,36 @@ update = function() {
   // move the camera
 
   if (controller.up) {
-    camera.position.y += 0.05;
+    player.y += 0.05;
   };
   if (controller.down) {
-    camera.position.y += -0.05;
+    player.y += -0.05;
   };
   if (controller.right) {
-    camera.position.x += 0.05;
+    player.x += 0.05;
   };
   if (controller.left) {
-    camera.position.x += -0.05;
+    player.x += -0.05;
   };
   
+  mesh.position.x = player.x;
+  mesh.position.y = player.y;
+  mesh.position.z = player.z;
+
+  camera.position.x = player.x;
+  camera.position.y = player.y-10;
+  camera.position.z = player.z+4;
+
+  camera.lookAt(player.x,player.y,player.z+1)
   
   // animate our cube a little bit
-  mesh.rotation.z += 0.01;
-  mesh.rotation.y += 0.01;
-  mesh.rotation.x += 0.01;
+  // mesh.rotation.z += 0.01;
+  // mesh.rotation.y += 0.01;
+  // mesh.rotation.x += 0.01;
 
-  mesh2.rotation.z += 0.01;
-  mesh2.rotation.y += 0.01;
-  mesh2.rotation.x += 0.01; 
+  // mesh2.rotation.z += 0.01;
+  // mesh2.rotation.y += 0.01;
+  // mesh2.rotation.x += 0.01; 
     
 
     }
