@@ -217,6 +217,18 @@ function initMeshes() {
     flatShading: false,
 });
 
+  const yellowMaterial = new THREE.MeshStandardMaterial({
+    color: listColorsHex[10],
+    flatShading: false,
+});
+
+  const pinkMaterial = new THREE.MeshStandardMaterial({
+    color: listColorsHex[14],
+    flatShading: false,
+});
+
+
+
   const darkMaterial = new THREE.MeshStandardMaterial({
     color: listColorsHex[0],
     flatShading: true,
@@ -289,9 +301,42 @@ function initMeshes() {
   sprout.add(stem, leaf, leaf2, leaf3, sproutTop);
   sprout.position.set(2,2,1.25);
 
-  sprout2 = sprout.clone();
-  scene.add(sprout2);
-  sprout2.position.set(3,2,1.25);
+  bloom = new THREE.Group();
+  const flowerTop = new THREE.Group();
+
+  const flowerCenterGeometry = new THREE.SphereBufferGeometry(0.15,8,8);
+  const flowerCenter = new THREE.Mesh(flowerCenterGeometry, yellowMaterial);
+  flowerCenter.castShadow = true;
+  flowerTop.add(flowerCenter);
+
+  const flowerPetalGeometry = new THREE.SphereBufferGeometry(0.15,8,8);
+  const flowerPetal = new THREE.Mesh(flowerPetalGeometry, pinkMaterial);
+  flowerPetal.position.set(0,0,.2);
+
+  fp2 = flowerPetal.clone();
+  fp2.position.set(0,0,-.2);
+
+  fp3 = flowerPetal.clone();
+  fp3.position.set(.14,0,-.13);
+
+  fp4 = flowerPetal.clone();
+  fp4.position.set(.14,0,.13);
+
+  fp5 = flowerPetal.clone();
+  fp5.position.set(-.14,0,-.13);
+
+  fp6 = flowerPetal.clone();
+  fp6.position.set(-.14,0,.13);
+
+  flowerTop.add(flowerPetal, fp2, fp3, fp4, fp5, fp6);
+  flowerTop.position.set(0,0,0.4);
+
+  bloom.add(stem.clone(), leaf.clone(), leaf2.clone(), leaf3.clone(), flowerTop);
+  bloom.position.set(4,2,1.25);
+  scene.add(bloom);
+
+
+
 
 
   // nose.rotation.z = Math.PI / 2;
@@ -373,6 +418,8 @@ class FlowerObj {
     this.y = y;
     this.z = 1.25;
     this.age = 0;
+    this.state = "sprout";
+    this.gotPollen = false;
     this.sprout = sprout.clone();
     scene.add(this.sprout);
     this.sprout.position.set(this.x,this.y,this.z);
