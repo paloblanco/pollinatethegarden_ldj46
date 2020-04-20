@@ -137,7 +137,7 @@ function init() {
 
     // create a geometry
     const geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
-    const geoFloor = new THREE.BoxBufferGeometry( 30, 30, 1 );
+    const geoFloor = new THREE.BoxBufferGeometry( 20, 20, 1 );
 
     // create a purple Basic material
     const material = new THREE.MeshStandardMaterial( { color: listColorsHex[12] } );
@@ -153,7 +153,7 @@ function init() {
     mesh.position.set(10,10,1.5);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    mesh2.position.set(12,12,0.5);
+    mesh2.position.set(10,10,0.5);
     mesh2.castShadow = true;
     mesh2.receiveShadow = true;
 
@@ -189,7 +189,7 @@ function init() {
 init();
 
 let legLeft, legRight, armLeft, armRight;
-let seed, sprout, bud, bloom, pollen, sprout2;
+let seed, sprout, bud, bloom, pollen, sprout2, aura, playerAura;
 
 function initMeshes() {
   // used to build a train in section 1.6
@@ -232,6 +232,13 @@ function initMeshes() {
   const darkMaterial = new THREE.MeshStandardMaterial({
     color: listColorsHex[0],
     flatShading: true,
+});
+
+const auraMaterial = new THREE.MeshStandardMaterial({
+  color: listColorsHex[9],
+  // flatShading: true,
+  opacity:0.5,
+  transparent:true,
 });
 
   const bodyGeometry = new THREE.BoxBufferGeometry( 1,1,1 );
@@ -279,17 +286,17 @@ function initMeshes() {
   seed.castShadow = true;
 
   sprout = new THREE.Group();
-  scene.add(sprout);
+  // scene.add(sprout);
   const stemGeometry = new THREE.CylinderBufferGeometry(0.05,0.05,0.5,6);
   const stem = new THREE.Mesh(stemGeometry, greenMaterial);
   stem.rotation.x = Math.PI/2;
   stem.castShadow = true;
-  const sproutTopGeometry = new THREE.SphereBufferGeometry(0.15,8,8);
+  const sproutTopGeometry = new THREE.SphereBufferGeometry(0.15,4,4);
   const sproutTop = new THREE.Mesh(sproutTopGeometry, greenMaterial);
   sproutTop.castShadow = true;
   sproutTop.position.set(0,0,0.4);
   sproutTop.scale.set(1,1,2)
-  const leafGeometry = new THREE.SphereBufferGeometry(0.05,8,8);
+  const leafGeometry = new THREE.SphereBufferGeometry(0.05,4,4);
   const leaf = new THREE.Mesh(leafGeometry, greenMaterial);
   leaf.scale.set(3,1,1)
   const leaf2 = leaf.clone();
@@ -304,12 +311,12 @@ function initMeshes() {
   bloom = new THREE.Group();
   const flowerTop = new THREE.Group();
 
-  const flowerCenterGeometry = new THREE.SphereBufferGeometry(0.15,8,8);
+  const flowerCenterGeometry = new THREE.SphereBufferGeometry(0.15,4,4);
   const flowerCenter = new THREE.Mesh(flowerCenterGeometry, yellowMaterial);
   flowerCenter.castShadow = true;
   flowerTop.add(flowerCenter);
 
-  const flowerPetalGeometry = new THREE.SphereBufferGeometry(0.15,8,8);
+  const flowerPetalGeometry = new THREE.SphereBufferGeometry(0.15,4,4);
   const flowerPetal = new THREE.Mesh(flowerPetalGeometry, pinkMaterial);
   flowerPetal.position.set(0,0,.2);
 
@@ -331,44 +338,22 @@ function initMeshes() {
   flowerTop.add(flowerPetal, fp2, fp3, fp4, fp5, fp6);
   flowerTop.position.set(0,0,0.4);
 
+  const auraGeometry = new THREE.SphereBufferGeometry(1,4,4);
+  aura = new THREE.Mesh(auraGeometry, auraMaterial);
+
+  playerAura = aura.clone();
+  
+  // bloom.add(aura);
+  
+  
   bloom.add(stem.clone(), leaf.clone(), leaf2.clone(), leaf3.clone(), flowerTop);
   bloom.position.set(4,2,1.25);
-  scene.add(bloom);
-
-
-
-
-
-  // nose.rotation.z = Math.PI / 2;
-  // nose.position.x = -1;
-
-  // const cabinGeometry = new THREE.BoxBufferGeometry( 2, 2.25, 1.5 );
-  // const cabin = new THREE.Mesh( cabinGeometry, bodyMaterial );
-  // cabin.position.set( 1.5, 0.4, 0 );
-
-  // const wheelGeo = new THREE.CylinderBufferGeometry( 0.4, 0.4, 1.75, 16 );
-  // wheelGeo.rotateX( Math.PI / 2 );
-
-
-  // const smallWheelRear = new THREE.Mesh( wheelGeo, detailMaterial );
-  // smallWheelRear.position.set( 0, -0.5, 0 );
-
-  // const smallWheelCenter = smallWheelRear.clone();
-  // smallWheelCenter.position.x = -1;
-
-  // const smallWheelFront = smallWheelRear.clone();
-  // smallWheelFront.position.x = -2;
-
-  // const bigWheel = smallWheelRear.clone();
-  // bigWheel.scale.set( 2, 2, 1.25 );
-  // bigWheel.position.set( 1.5, -0.1, 0 );
-
-  // const chimneyGeometry = new THREE.CylinderBufferGeometry( 0.3, 0.1, 0.5 );
-  // const chimney = new THREE.Mesh( chimneyGeometry, detailMaterial );
-  // chimney.position.set( -2, 0.9, 0 );
+  // scene.add(bloom);
 
   
-  // train.add( smallWheelRear, smallWheelCenter, smallWheelFront, bigWheel );
+
+
+
 
 }
 
@@ -403,10 +388,13 @@ class SeedObj {
     this.x += this.x_velocity;
     this.y += this.y_velocity;
     this.z += this.z_velocity;
+    if (this.x > 20 | this.x < 0) {this.x_velocity *= -1}
+    if (this.y > 20 | this.y < 0) {this.y_velocity *= -1}
     this.mesh.position.set(this.x,this.y,this.z);
     this.z_velocity += -this.grav;
     if (this.z < 1) {
       this.dead = true;
+      scene.remove(this.mesh);
       allFlowers.push(new FlowerObj(this.x, this.y));
     }
   }
@@ -424,13 +412,34 @@ class FlowerObj {
     scene.add(this.sprout);
     this.sprout.position.set(this.x,this.y,this.z);
     this.timer = 0;
+    this.aura = aura.clone();
   }
   update() {
     this.timer += 1;
+    if (this.timer > 600) {
+      let chance = Math.random();
+      if (chance < .005) {
+        if (this.state == "sprout") {
+          this.state = "bloom";
+          scene.remove(this.sprout);
+          this.bloom = bloom.clone();
+          scene.add(this.bloom);
+          this.bloom.position.set(this.x,this.y,this.z);
+          this.timer = 0;
+        } else if (this.state == "bloom") {
+          this.state = "pollen";
+          this.bloom.add(this.aura);
+          this.timer=0;
+        }
+      }
+    }
+    if (this.aura) {this.aura.rotation.z += .1}
   }
 }
 
-
+for (let i=0; i<6; i++) {
+  allFlowers.push(new FlowerObj(0.5+20*Math.random(),0.5+19*Math.random()))
+}
 
 /*
 ################
@@ -589,6 +598,8 @@ var player = {
   flash: false,
   flashtime: 0,
   glowtime:0,
+  pollinated: false,
+  aura: playerAura,
 };
 
 let vectorUp = new THREE.Vector3(0,0,1);
@@ -608,6 +619,17 @@ let heightAdd = 0;
 let heightAddGoal = 0;
 let footSwing = 0;
 let footSwingGoal = 0;
+let xAddGoal = 0;
+let yAddGoal = 0;
+let zAddGoal = 0;
+let xAdd = 0;
+let yAdd = 0;
+let zAdd = 0;
+
+camera.position.x = player.x;
+camera.position.y = player.y-10;
+camera.position.z = player.z+4;
+camera.lookAt(player.x,player.y,player.z+1)
 
 update = function() {
 
@@ -641,6 +663,13 @@ update = function() {
   player.y += player.y_velocity;
   player.x += player.x_velocity;
 
+  if (player.x < 0) {player.x = 0}
+  if (player.x > 20) {player.x = 20}
+  if (player.y < 0) {player.y = 0}
+  if (player.y > 20) {player.y = 20}
+
+  // if player.y
+
   if (player.y_velocity != 0 | player.x_velocity != 0 ){
     player.angle = Math.atan2(player.y_velocity, player.x_velocity);
     walkTime += 1;
@@ -664,15 +693,54 @@ update = function() {
   beeAll.position.z = player.z;
   beeAll.setRotationFromAxisAngle(vectorUp,player.angle - Math.PI*0.5);
 
-  camera.position.x = player.x;
-  camera.position.y = player.y-10;
+  xAddGoal = 20*player.x_velocity_goal;
+  xAdd += (xAddGoal - xAdd)/30
+  yAddGoal = 30*player.y_velocity_goal;
+  yAdd += (yAddGoal - yAdd)/30
+
+  camera.position.x = player.x+xAdd;
+  camera.position.y = player.y-10 + yAdd;
   camera.position.z = player.z+4;
 
-  camera.lookAt(player.x,player.y,player.z+1)
-  
-     
-
+  for (let i = 0; i < allFlowers.length; i++) {
+    f = allFlowers[i]
+    if (f.state == "pollen") {
+      if (Math.abs(f.x-player.x)<1 & Math.abs(f.y-player.y)<1) {
+        if (player.pollinated) {
+          player.pollinated = false;
+          bee.remove(player.aura);
+          let seedCount = 2 + Math.floor(5*Math.random());
+          for (let i=0; i < seedCount; i++) {
+            allSeeds.push(new SeedObj(f.x,f.y));
+          }
+          f.state = "bloom";
+          f.timer=0;
+          f.bloom.remove(f.aura);
+        } else {
+          player.pollinated = true;
+          bee.add(player.aura);
+          f.state = "bloom";
+          f.timer=0;
+          f.bloom.remove(f.aura);
+        }
+      }
     }
+    
+    f.update();
+  }
+
+  for (let i = 0; i < allSeeds.length; i++) {
+    if (allSeeds[i].dead) {
+      
+      allSeeds.splice(i,1);
+      
+    } else {
+      allSeeds[i].update();
+    }
+    
+  }
+
+}
 
 /*
 ################
