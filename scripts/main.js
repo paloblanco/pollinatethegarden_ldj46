@@ -71,7 +71,7 @@ basewidth = 400;
 basescale = 1; //scaling factor
 targetheight = baseheight*basescale;
 targetwidth = basewidth*basescale;
-pixelRatio = 1.5;//window.devicePixelRatio;
+pixelRatio = window.devicePixelRatio;
 
 //OFFSCREEN CANVAS
 
@@ -104,6 +104,8 @@ let camera;
 let renderer;
 let scene;
 let mesh;
+let mesh2
+let bee;
 
 // OFFSCREEN TARGET FOR 3D drawing
 threeCanvas = document.createElement("canvas");
@@ -132,14 +134,10 @@ function init() {
     // we'll move the camera back a bit so that we can view the scene
     camera.position.set( 10, 3, 3 );
     camera.lookAt(10,10,3);
-    // the above line is equivalent to doing the following:
-    // camera.position.x = 0;
-    // camera.position.y = 0;
-    // camera.position.z = 10;
 
     // create a geometry
     const geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
-    const geoFloor = new THREE.BoxBufferGeometry( 60, 60, 1 );
+    const geoFloor = new THREE.BoxBufferGeometry( 30, 30, 1 );
 
     // create a purple Basic material
     const material = new THREE.MeshStandardMaterial( { color: listColorsHex[12] } );
@@ -150,12 +148,12 @@ function init() {
     mesh2 = new THREE.Mesh( geoFloor, material2 );
 
     // add the mesh to the scene
-    scene.add( mesh );
+    // scene.add( mesh );
     scene.add( mesh2 );
     mesh.position.set(10,10,1.5);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    mesh2.position.set(30,30,0.5);
+    mesh2.position.set(12,12,0.5);
     mesh2.castShadow = true;
     mesh2.receiveShadow = true;
 
@@ -189,6 +187,201 @@ function init() {
 }
 
 init();
+
+let legLeft, legRight, armLeft, armRight;
+let seed, sprout, bud, bloom, pollen, sprout2;
+
+function initMeshes() {
+  // used to build a train in section 1.6
+  bee = new THREE.Group();
+  // scene.add( bee );
+
+  beeAll = new THREE.Group();
+  scene.add(beeAll);
+
+  bee.castShadow = true;
+  bee.receiveShadow = true;
+
+  const bodyMaterial = new THREE.MeshStandardMaterial({
+      color: listColorsHex[10],
+      flatShading: false,
+  });
+
+  const detailMaterial = new THREE.MeshStandardMaterial({
+      color: listColorsHex[3],
+      flatShading: false,
+  });
+
+  const greenMaterial = new THREE.MeshStandardMaterial({
+    color: listColorsHex[11],
+    flatShading: false,
+});
+
+  const darkMaterial = new THREE.MeshStandardMaterial({
+    color: listColorsHex[0],
+    flatShading: true,
+});
+
+  const bodyGeometry = new THREE.BoxBufferGeometry( 1,1,1 );
+  const body = new THREE.Mesh( bodyGeometry, bodyMaterial, castShadow = true, receiveShadow = true );
+  body.castShadow = true;
+  body.receiveShadow = true;
+
+  const eyeGeometry = new THREE.BoxBufferGeometry( 0.15,0.15,0.15 );
+  const eyeLeft = new THREE.Mesh( eyeGeometry, darkMaterial );
+  const eyeRight = new THREE.Mesh( eyeGeometry, darkMaterial );
+  legLeft = new THREE.Mesh( eyeGeometry, darkMaterial );
+  legRight = new THREE.Mesh( eyeGeometry, darkMaterial );
+  armLeft = new THREE.Mesh( eyeGeometry, darkMaterial );
+  armRight = new THREE.Mesh( eyeGeometry, darkMaterial );
+
+  eyeLeft.position.set(-0.25,0.5,0.25);
+  eyeRight.position.set(0.25,0.5,0.25);
+  
+  legLeft.position.set(-0.25,0.0,-0.65);
+  legLeft.scale.set(2,2,2);
+  legRight.position.set(0.25,0.0,-0.65);
+  legRight.scale.set(2,2,2);
+  armLeft.position.set(-0.65,0.0,0.0);
+  armLeft.scale.set(2,2,2);
+  armRight.position.set(0.65,0.0,0.0);
+  armRight.scale.set(2,2,2);
+
+  const stripeGeometry = new THREE.BoxBufferGeometry( 1.05,0.15,1.05 );
+  const stripe1 = new THREE.Mesh(stripeGeometry, darkMaterial);
+  stripe1.position.set(0,0.2,0);
+  const stripe2 = new THREE.Mesh(stripeGeometry, darkMaterial);
+  stripe2.position.set(0,-0.1,0);
+  const stripe3 = new THREE.Mesh(stripeGeometry, darkMaterial);
+  stripe3.position.set(0,-0.4,0);
+  
+  bee.add( body );
+  bee.add( eyeLeft, eyeRight );
+  bee.add( stripe1, stripe2, stripe3, armLeft, armRight); 
+
+  beeAll.add(bee);
+  beeAll.add(legLeft, legRight);
+
+  const seedGeometry = new THREE.SphereBufferGeometry(0.15,6,6);
+  seed = new THREE.Mesh(seedGeometry, greenMaterial);
+  seed.castShadow = true;
+
+  sprout = new THREE.Group();
+  scene.add(sprout);
+  const stemGeometry = new THREE.CylinderBufferGeometry(0.05,0.05,0.5,6);
+  const stem = new THREE.Mesh(stemGeometry, greenMaterial);
+  stem.rotation.x = Math.PI/2;
+  stem.castShadow = true;
+  const sproutTopGeometry = new THREE.SphereBufferGeometry(0.15,8,8);
+  const sproutTop = new THREE.Mesh(sproutTopGeometry, greenMaterial);
+  sproutTop.castShadow = true;
+  sproutTop.position.set(0,0,0.4);
+  sproutTop.scale.set(1,1,2)
+  const leafGeometry = new THREE.SphereBufferGeometry(0.05,8,8);
+  const leaf = new THREE.Mesh(leafGeometry, greenMaterial);
+  leaf.scale.set(3,1,1)
+  const leaf2 = leaf.clone();
+  const leaf3 = leaf.clone();
+  leaf.position.set(0.15,0,0.1);
+  leaf2.position.set(-0.15,0,0);
+  leaf3.position.set(0.15,0,-0.1);
+
+  sprout.add(stem, leaf, leaf2, leaf3, sproutTop);
+  sprout.position.set(2,2,1.25);
+
+  sprout2 = sprout.clone();
+  scene.add(sprout2);
+  sprout2.position.set(3,2,1.25);
+
+
+  // nose.rotation.z = Math.PI / 2;
+  // nose.position.x = -1;
+
+  // const cabinGeometry = new THREE.BoxBufferGeometry( 2, 2.25, 1.5 );
+  // const cabin = new THREE.Mesh( cabinGeometry, bodyMaterial );
+  // cabin.position.set( 1.5, 0.4, 0 );
+
+  // const wheelGeo = new THREE.CylinderBufferGeometry( 0.4, 0.4, 1.75, 16 );
+  // wheelGeo.rotateX( Math.PI / 2 );
+
+
+  // const smallWheelRear = new THREE.Mesh( wheelGeo, detailMaterial );
+  // smallWheelRear.position.set( 0, -0.5, 0 );
+
+  // const smallWheelCenter = smallWheelRear.clone();
+  // smallWheelCenter.position.x = -1;
+
+  // const smallWheelFront = smallWheelRear.clone();
+  // smallWheelFront.position.x = -2;
+
+  // const bigWheel = smallWheelRear.clone();
+  // bigWheel.scale.set( 2, 2, 1.25 );
+  // bigWheel.position.set( 1.5, -0.1, 0 );
+
+  // const chimneyGeometry = new THREE.CylinderBufferGeometry( 0.3, 0.1, 0.5 );
+  // const chimney = new THREE.Mesh( chimneyGeometry, detailMaterial );
+  // chimney.position.set( -2, 0.9, 0 );
+
+  
+  // train.add( smallWheelRear, smallWheelCenter, smallWheelFront, bigWheel );
+
+}
+
+initMeshes();
+
+/*
+################
+FLOWER LOGIC
+################
+*/
+let allSeeds = [];
+let allFlowers = [];
+
+class SeedObj {
+  constructor(x,y) {
+    this.x = x;
+    this.y = y;
+    this.z = 1;
+    this.y_velocity = 0.3*(0.5-Math.random());
+    this.x_velocity = 0.3*(0.5-Math.random());
+    this.z_velocity = 0.15 + 0.05*(Math.random());
+    this.grav = 0.01;
+    this.x_draw = 0;
+    this.y_draw = 0;
+    this.dead = false;
+    this.age = 0;
+    this.mesh = seed.clone();
+    scene.add(this.mesh);
+    this.mesh.position.set(this.x,this.y,this.z);
+  }
+  update() {
+    this.x += this.x_velocity;
+    this.y += this.y_velocity;
+    this.z += this.z_velocity;
+    this.mesh.position.set(this.x,this.y,this.z);
+    this.z_velocity += -this.grav;
+    if (this.z < 1) {
+      this.dead = true;
+      allFlowers.push(new FlowerObj(this.x, this.y));
+    }
+  }
+}
+
+class FlowerObj {
+  constructor(x,y) {
+    this.x = x;
+    this.y = y;
+    this.z = 1.25;
+    this.age = 0;
+    this.sprout = sprout.clone();
+    scene.add(this.sprout);
+    this.sprout.position.set(this.x,this.y,this.z);
+    this.timer = 0;
+  }
+  update() {
+    this.timer += 1;
+  }
+}
 
 
 
@@ -335,10 +528,14 @@ var player = {
   width:1,
   x:10, 
   x_velocity:0,
+  x_velocity_goal:0,
   y:10,
   y_velocity:0,
-  z:1.5,
+  y_velocity_goal:0,
+  z:1.65,
   z_velocity:0,
+  total_velocity:0,
+  angle:90,
   dead: false,
   speed: 0.1,
   glow: false,
@@ -347,16 +544,8 @@ var player = {
   glowtime:0,
 };
 
-class corpse {
-  constructor(x,y) {
-    this.x = x;
-    this.y = y;
-    this.y_velocity = 0;
-    this.jumping = true;
-    this.x_draw = 0;
-    this.y_draw = 0;
-  }
-}
+let vectorUp = new THREE.Vector3(0,0,1);
+
 
 
 // thislevel = buildlevel(currentlevel);
@@ -367,26 +556,66 @@ UPDATE
 ################
 */
 
+let walkTime = 0;
+let heightAdd = 0;
+let heightAddGoal = 0;
+let footSwing = 0;
+let footSwingGoal = 0;
+
 update = function() {
 
-  // move the camera
+  // move the player
+
+  player.y_velocity_goal = 0;
+  player.x_velocity_goal = 0;
 
   if (controller.up) {
-    player.y += 0.05;
+    player.y_velocity_goal = 0.05;
   };
   if (controller.down) {
-    player.y += -0.05;
+    player.y_velocity_goal = -0.05;
   };
   if (controller.right) {
-    player.x += 0.05;
+    player.x_velocity_goal = 0.05;
   };
   if (controller.left) {
-    player.x += -0.05;
+    player.x_velocity_goal = -0.05;
   };
+
+  player.y_velocity_goal = player.y_velocity_goal*((player.x_velocity_goal==0) + 0.707*(player.x_velocity_goal!=0));
+  player.x_velocity_goal = player.x_velocity_goal*((player.y_velocity_goal==0) + 0.707*(player.y_velocity_goal!=0));
+
+  player.y_velocity += (player.y_velocity_goal - player.y_velocity)/2;
+  if (Math.abs(player.y_velocity_goal - player.y_velocity) < 0.001) {player.y_velocity = player.y_velocity_goal}
+
+  player.x_velocity += (player.x_velocity_goal - player.x_velocity)/2;
+  if (Math.abs(player.x_velocity_goal - player.x_velocity) < 0.001) {player.x_velocity = player.x_velocity_goal}
+
+  player.y += player.y_velocity;
+  player.x += player.x_velocity;
+
+  if (player.y_velocity != 0 | player.x_velocity != 0 ){
+    player.angle = Math.atan2(player.y_velocity, player.x_velocity);
+    walkTime += 1;
+  } else {
+    walkTime = 0;
+  }
+
+  heightAddGoal = 0.2 * Math.abs((Math.sin(walkTime/5))**4);
+  footSwingGoal = 0.4 * Math.sin(walkTime/5);
+  heightAdd += (heightAddGoal - heightAdd)/2;
+  footSwing += (footSwingGoal - footSwing)/2;
   
-  mesh.position.x = player.x;
-  mesh.position.y = player.y;
-  mesh.position.z = player.z;
+  bee.position.z = heightAdd;
+  legLeft.position.y = footSwing;
+  legRight.position.y = -footSwing;
+  armLeft.position.y = -0.5*footSwing;
+  armRight.position.y = 0.5*footSwing;
+  
+  beeAll.position.x = player.x;
+  beeAll.position.y = player.y;
+  beeAll.position.z = player.z;
+  beeAll.setRotationFromAxisAngle(vectorUp,player.angle - Math.PI*0.5);
 
   camera.position.x = player.x;
   camera.position.y = player.y-10;
@@ -394,15 +623,7 @@ update = function() {
 
   camera.lookAt(player.x,player.y,player.z+1)
   
-  // animate our cube a little bit
-  // mesh.rotation.z += 0.01;
-  // mesh.rotation.y += 0.01;
-  // mesh.rotation.x += 0.01;
-
-  // mesh2.rotation.z += 0.01;
-  // mesh2.rotation.y += 0.01;
-  // mesh2.rotation.x += 0.01; 
-    
+     
 
     }
 
@@ -427,13 +648,6 @@ draw = function() {
 
     print("Its Alive!", 11,12);
       
-    // context.scale(basescale*pixelRatio, basescale*pixelRatio);
-
-    
-
-    // render, or 'create a still image', of the scene
-    // this will create one still image / frame each time the animate
-    // function calls itself
     
 
     context.drawImage(offCanvas,0,0,pixelRatio*basescale*400,pixelRatio*basescale*240);
