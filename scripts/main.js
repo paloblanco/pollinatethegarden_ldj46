@@ -120,7 +120,7 @@ function init() {
     // create a Scene
     scene = new THREE.Scene();
     // set the background color
-    scene.background = new THREE.Color(listColorsHex[9]);
+    scene.background = new THREE.Color(listColorsHex[12]);
 
     //make the camera
     // Create a Camera
@@ -359,6 +359,30 @@ const auraMaterial = new THREE.MeshStandardMaterial({
 
 initMeshes();
 
+// set up sounds
+function sound(src) {
+  this.sound = document.createElement("audio");
+  this.sound.src = src;
+  this.sound.setAttribute("preload", "auto");
+  this.sound.setAttribute("controls", "none");
+  this.sound.style.display = "none";
+  document.body.appendChild(this.sound);
+  this.play = function(){
+    this.sound.play();
+  }
+  this.stop = function(){
+    this.sound.pause();
+  }
+};
+
+var beep1 = new sound("data/pollinate_0.wav");
+beep1.sound.volume=0.025;
+var beep2 = new sound("data/pollinate_1.wav");
+beep2.sound.volume=0.025;
+let music = new sound("data/LD46_Song.mp3");
+music.sound.loop = true;
+music.sound.volume = 0.5;
+
 /*
 ################
 FLOWER LOGIC
@@ -430,6 +454,7 @@ class FlowerObj {
           this.state = "pollen";
           this.bloom.add(this.aura);
           this.timer=0;
+          beep2.play();
         }
       }
     }
@@ -440,6 +465,7 @@ class FlowerObj {
 for (let i=0; i<6; i++) {
   allFlowers.push(new FlowerObj(0.5+20*Math.random(),0.5+19*Math.random()))
 }
+allFlowers[0].timer = 1000;
 
 /*
 ################
@@ -449,7 +475,7 @@ PRINTING SPRITE FONT
 
 // FIX SPRITE SHEET
 var font_sheet = new Image();
-font_sheet.src = "data/pico8_font_nokia.png";
+font_sheet.src = "data/pico8_font_white.png";
 
 var print = function(str, x, y) {
   str = str.toUpperCase();
@@ -467,27 +493,7 @@ var print = function(str, x, y) {
   }
 };
 
-//loading other images
-var sprite_sheet = new Image();
-sprite_sheet.src = "data/phoenix2_nokia.png";
 
-// set up sounds
-function sound(src) {
-  this.sound = document.createElement("audio");
-  this.sound.src = src;
-  this.sound.setAttribute("preload", "auto");
-  this.sound.setAttribute("controls", "none");
-  this.sound.style.display = "none";
-  document.body.appendChild(this.sound);
-  this.play = function(){
-    this.sound.play();
-  }
-  this.stop = function(){
-    this.sound.pause();
-  }
-};
-
-var beep = new sound("data/sound_0.wav");
 
 /*
 ################
@@ -604,6 +610,15 @@ var player = {
 
 let vectorUp = new THREE.Vector3(0,0,1);
 
+let bloom1 = new FlowerObj(player.x+4, player.y);
+bloom1.state = "bloom";
+scene.remove(bloom1.sprout);
+bloom1.bloom = bloom.clone();
+scene.add(bloom1.bloom);
+bloom1.bloom.position.set(bloom1.x,bloom1.y,bloom1.z);
+bloom1.timer = 700;
+
+allFlowers.push(bloom1);
 
 
 // thislevel = buildlevel(currentlevel);
@@ -615,6 +630,7 @@ UPDATE
 */
 
 let walkTime = 0;
+let globalTime = 0;
 let heightAdd = 0;
 let heightAddGoal = 0;
 let footSwing = 0;
@@ -625,6 +641,10 @@ let zAddGoal = 0;
 let xAdd = 0;
 let yAdd = 0;
 let zAdd = 0;
+let progress = 0;
+let win = false;
+let interacted=false;
+let musicOn=false;
 
 camera.position.x = player.x;
 camera.position.y = player.y-10;
@@ -633,6 +653,8 @@ camera.lookAt(player.x,player.y,player.z+1)
 
 update = function() {
 
+  if (!win) {globalTime += 1}
+
   // move the player
 
   player.y_velocity_goal = 0;
@@ -640,15 +662,19 @@ update = function() {
 
   if (controller.up) {
     player.y_velocity_goal = 0.05;
+    interacted=true;
   };
   if (controller.down) {
     player.y_velocity_goal = -0.05;
+    interacted=true;
   };
   if (controller.right) {
     player.x_velocity_goal = 0.05;
+    interacted=true;
   };
   if (controller.left) {
     player.x_velocity_goal = -0.05;
+    interacted=true;
   };
 
   player.y_velocity_goal = player.y_velocity_goal*((player.x_velocity_goal==0) + 0.707*(player.x_velocity_goal!=0));
@@ -702,6 +728,7 @@ update = function() {
   camera.position.y = player.y-10 + yAdd;
   camera.position.z = player.z+4;
 
+if (!win) {  
   for (let i = 0; i < allFlowers.length; i++) {
     f = allFlowers[i]
     if (f.state == "pollen") {
@@ -716,12 +743,14 @@ update = function() {
           f.state = "bloom";
           f.timer=0;
           f.bloom.remove(f.aura);
+          beep1.play()
         } else {
           player.pollinated = true;
           bee.add(player.aura);
           f.state = "bloom";
           f.timer=0;
           f.bloom.remove(f.aura);
+          beep1.play()
         }
       }
     }
@@ -738,6 +767,19 @@ update = function() {
       allSeeds[i].update();
     }
     
+  }}
+
+  progress = allFlowers.length;
+  if (progress > 150) {
+    win = true;
+    music.stop();
+  }
+
+  if (interacted) {
+    if (!musicOn) {
+      music.play();
+      musicOn=true;
+    }
   }
 
 }
@@ -761,8 +803,16 @@ draw = function() {
     
 
 
-    print("Its Alive!", 11,12);
-      
+    print("pollinate the garden      progress: " + String(progress) + " of 150", 11,12);
+    print("time: " + String(Math.floor(globalTime/60)), 11,24);
+
+    if (win) {
+      print("You saved the garden", 60,100);
+      print("title: pollinate the garden", 100,120);
+      print("author: palo blanco games", 100,132);
+      print("thrown together for ldj46", 100,144);
+      print("Apr 20 2020", 100,156);
+    }
     
 
     context.drawImage(offCanvas,0,0,pixelRatio*basescale*400,pixelRatio*basescale*240);
