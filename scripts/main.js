@@ -166,17 +166,17 @@ function init() {
     scene.add( light );
 
     //Set up shadow properties for the light
-    light.shadow.mapSize.width = 512;  // default
-    light.shadow.mapSize.height = 512; // default
+    light.shadow.mapSize.width = 128;  // default
+    light.shadow.mapSize.height = 128; // default
     light.shadow.camera.near = 0.5;       // default
-    light.shadow.camera.far = 500      // default
+    light.shadow.camera.far = 50      // default
 
     //move the light, since its default position is 000
     // light.position.set(2,-3,4);
 
     //add the light to the scene
-    var light = new THREE.AmbientLight( 0x606060 ); // soft white light
-    scene.add(light);
+    var lighta = new THREE.AmbientLight( 0x606060 ); // soft white light
+    scene.add(lighta);
 
     // create a renderer
     renderer = new THREE.WebGLRenderer({antialias: false});
@@ -208,7 +208,7 @@ function initMeshes() {
   });
 
   const detailMaterial = new THREE.MeshStandardMaterial({
-      color: listColorsHex[3],
+      color: listColorsHex[6],
       flatShading: false,
   });
 
@@ -219,12 +219,12 @@ function initMeshes() {
 
   const yellowMaterial = new THREE.MeshStandardMaterial({
     color: listColorsHex[10],
-    flatShading: false,
+    flatShading: true,
 });
 
   const pinkMaterial = new THREE.MeshStandardMaterial({
     color: listColorsHex[14],
-    flatShading: false,
+    flatShading: true,
 });
 
 
@@ -236,7 +236,7 @@ function initMeshes() {
 
 const auraMaterial = new THREE.MeshStandardMaterial({
   color: listColorsHex[9],
-  // flatShading: true,
+  flatShading: true,
   opacity:0.5,
   transparent:true,
 });
@@ -249,14 +249,32 @@ const auraMaterial = new THREE.MeshStandardMaterial({
   const eyeGeometry = new THREE.BoxBufferGeometry( 0.15,0.15,0.15 );
   const eyeLeft = new THREE.Mesh( eyeGeometry, darkMaterial );
   const eyeRight = new THREE.Mesh( eyeGeometry, darkMaterial );
+  const mouth = new THREE.Mesh( eyeGeometry, darkMaterial );
   legLeft = new THREE.Mesh( eyeGeometry, darkMaterial );
   legRight = new THREE.Mesh( eyeGeometry, darkMaterial );
   armLeft = new THREE.Mesh( eyeGeometry, darkMaterial );
   armRight = new THREE.Mesh( eyeGeometry, darkMaterial );
+  const stingerGeometry = new THREE.CylinderBufferGeometry(0.15,0,0.3,6);
+  const stinger = new THREE.Mesh( stingerGeometry, detailMaterial);
+  const wingGeometry = new THREE.CylinderBufferGeometry(.15,.15,.05);
+  const wing = new THREE.Mesh(wingGeometry, detailMaterial);
+
 
   eyeLeft.position.set(-0.25,0.5,0.25);
   eyeRight.position.set(0.25,0.5,0.25);
-  
+  mouth.position.set(0.0,0.5,-0.25);
+  mouth.scale.set(3,1,0.75);
+  stinger.position.set(0,-0.6,0);
+  wing.position.set(-0.35,0,0.65);
+  wing.scale.set(2.4,1.2,1.2);
+  wing.rotation.z = Math.PI*0.5;
+  wing.rotation.y = -Math.PI*0.25;
+  wing2 = wing.clone();
+  wing2.position.set(0.35,0,0.65);
+  wing2.rotation.y = Math.PI*0.25;
+
+
+
   legLeft.position.set(-0.25,0.0,-0.65);
   legLeft.scale.set(2,2,2);
   legRight.position.set(0.25,0.0,-0.65);
@@ -275,8 +293,8 @@ const auraMaterial = new THREE.MeshStandardMaterial({
   stripe3.position.set(0,-0.4,0);
   
   bee.add( body );
-  bee.add( eyeLeft, eyeRight );
-  bee.add( stripe1, stripe2, stripe3, armLeft, armRight); 
+  bee.add( eyeLeft, eyeRight , mouth);
+  bee.add( stripe1, stripe2, stripe3, armLeft, armRight, stinger, wing, wing2); 
 
   beeAll.add(bee);
   beeAll.add(legLeft, legRight);
@@ -287,16 +305,16 @@ const auraMaterial = new THREE.MeshStandardMaterial({
 
   sprout = new THREE.Group();
   // scene.add(sprout);
-  const stemGeometry = new THREE.CylinderBufferGeometry(0.05,0.05,0.5,6);
+  const stemGeometry = new THREE.CylinderBufferGeometry(0.05,0.05,0.5,4);
   const stem = new THREE.Mesh(stemGeometry, greenMaterial);
   stem.rotation.x = Math.PI/2;
-  stem.castShadow = true;
-  const sproutTopGeometry = new THREE.SphereBufferGeometry(0.15,4,4);
+  // stem.castShadow = true;
+  const sproutTopGeometry = new THREE.SphereBufferGeometry(0.15,5,4);
   const sproutTop = new THREE.Mesh(sproutTopGeometry, greenMaterial);
-  sproutTop.castShadow = true;
+  // sproutTop.castShadow = true;
   sproutTop.position.set(0,0,0.4);
   sproutTop.scale.set(1,1,2)
-  const leafGeometry = new THREE.SphereBufferGeometry(0.05,4,4);
+  const leafGeometry = new THREE.SphereBufferGeometry(0.05,5,4);
   const leaf = new THREE.Mesh(leafGeometry, greenMaterial);
   leaf.scale.set(3,1,1)
   const leaf2 = leaf.clone();
@@ -313,7 +331,7 @@ const auraMaterial = new THREE.MeshStandardMaterial({
 
   const flowerCenterGeometry = new THREE.SphereBufferGeometry(0.15,4,4);
   const flowerCenter = new THREE.Mesh(flowerCenterGeometry, yellowMaterial);
-  flowerCenter.castShadow = true;
+  // flowerCenter.castShadow = true;
   flowerTop.add(flowerCenter);
 
   const flowerPetalGeometry = new THREE.SphereBufferGeometry(0.15,4,4);
@@ -419,6 +437,7 @@ class SeedObj {
     if (this.z < 1) {
       this.dead = true;
       scene.remove(this.mesh);
+      // this.mesh.dispose();
       allFlowers.push(new FlowerObj(this.x, this.y));
     }
   }
@@ -437,28 +456,31 @@ class FlowerObj {
     this.sprout.position.set(this.x,this.y,this.z);
     this.timer = 0;
     this.aura = aura.clone();
+    this.goalTime = 600 + Math.floor(400*Math.random());
   }
   update() {
     this.timer += 1;
-    if (this.timer > 600) {
-      let chance = Math.random();
-      if (chance < .005) {
+    if (this.timer > this.goalTime) {
+      
         if (this.state == "sprout") {
           this.state = "bloom";
           scene.remove(this.sprout);
+          // this.sprout.dispose();
           this.bloom = bloom.clone();
           scene.add(this.bloom);
           this.bloom.position.set(this.x,this.y,this.z);
           this.timer = 0;
+          this.goalTime = 600 + Math.floor(400*Math.random());
         } else if (this.state == "bloom") {
           this.state = "pollen";
           this.bloom.add(this.aura);
           this.timer=0;
           beep2.play();
+          
         }
-      }
+      
     }
-    if (this.aura) {this.aura.rotation.z += .1}
+    this.aura.rotation.z += .1
   }
 }
 
@@ -539,49 +561,7 @@ ENTITY CREATION
 ################
 */
 
-var currentlevel = 1;
-var timer = 0;
-// Level array
-var levels = {"1": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 17, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], "2": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 32, 0, 8, 2, 2, 4, 0, 17, 0, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2], "3": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 17, 2, 2, 0, 0, 0, 0, 0, 0, 8, 2, 3, 4, 0, 0, 0, 0, 0, 0, 5, 3, 3, 3, 2, 2, 2, 2, 2, 2, 3, 3], "4": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 8, 2, 0, 0, 0, 0, 0, 0, 0, 0, 5, 3, 0, 0, 32, 0, 0, 0, 0, 0, 5, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3], "5": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 17, 2, 2, 0, 0, 0, 0, 0, 0, 8, 2, 3, 4, 18, 18, 18, 18, 18, 18, 5, 3, 3, 3, 2, 2, 2, 2, 2, 2, 3, 3], "6": [0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 8, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 18, 0, 0, 18, 0, 0, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], "7": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 0, 0, 0, 0, 6, 0, 0, 0, 5, 4, 0, 0, 0, 0, 6, 0, 0, 0, 5, 4, 0, 0, 0, 0, 19, 0, 0, 0, 5, 4, 32, 0, 20, 0, 19, 0, 17, 0, 5, 3, 2, 2, 2, 2, 2, 2, 2, 2, 3], "8": [0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 32, 0, 0, 0, 0, 0, 0, 19, 17, 2, 2, 0, 0, 0, 0, 0, 0, 8, 2, 3, 4, 18, 0, 20, 0, 0, 18, 5, 3, 3, 3, 2, 2, 2, 2, 2, 2, 3, 3], "9": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 21, 21, 21, 21, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], "10": [0, 0, 0, 0, 0, 19, 0, 0, 19, 0, 32, 0, 0, 0, 0, 19, 0, 17, 19, 0, 2, 2, 21, 21, 21, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 20, 0, 0, 0, 0, 0, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3], "11": [32, 0, 0, 0, 0, 0, 0, 5, 3, 3, 8, 0, 0, 0, 0, 0, 0, 5, 3, 3, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 18, 18, 18, 18, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3], "12": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 9, 0, 0, 0, 5, 0, 0, 0, 0, 0, 9, 0, 0, 0, 5, 0, 0, 0, 0, 0, 9, 0, 0, 0, 5, 32, 0, 22, 0, 0, 9, 0, 17, 0, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3], "13": [0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 22, 0, 32, 0, 0, 0, 0, 0, 9, 17, 2, 2, 2, 18, 18, 18, 18, 8, 8, 2, 3, 3, 4, 2, 2, 2, 2, 5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], "14": [0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 17, 0, 9, 0, 0, 22, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 18, 18, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3], "15": [3, 3, 3, 3, 3, 3, 3, 3, 24, 25, 4, 0, 0, 0, 0, 0, 0, 26, 24, 24, 4, 0, 0, 0, 0, 0, 26, 24, 24, 24, 4, 0, 0, 0, 0, 26, 24, 24, 24, 24, 4, 0, 32, 10, 26, 24, 24, 24, 24, 24, 3, 2, 2, 2, 2, 2, 23, 23, 23, 23], "16": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "17": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "18": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "19": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "20": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "21": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "22": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "23": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "24": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
-var mylevel;
-var corpselist = [];
-var plate = false;
-var hitplate = false;
 
-var getblock = function(x,y) {
-  let xi = Math.floor((x-2)/8);
-  let yi = Math.floor(y/8);
-  // let thislevel = levels[currentlevel.toString()];
-  let ix = thislevel[xi + yi*10];
-  if (ix==19 & plate) {
-    ix = 0;
-  }
-  return ix;
-};
-
-var setblock = function(x,y,num) {
-  let xi = Math.floor((x-2)/8);
-  let yi = Math.floor(y/8);
-  // let thislevel = levels[currentlevel.toString()];
-  // let ix = thislevel[xi + yi*10];
-  thislevel[xi + yi*10] = num;
-  return num;
-};
-
-var buildlevel = function(lev) {
-  let thislevel = levels[currentlevel.toString()];
-  for (let i=0; i < thislevel.length; i ++) {
-    let ix = thislevel[i];
-    if (ix == 32) {
-      thislevel[i] = 0;
-      phoenix.x = (i%10)*8 + 2;
-      phoenix.y = Math.floor(i/10)*8;
-    };
-  };
-  corpselist=[];
-  plate = false;
-  return thislevel;
-};
 
 
 var player = {
@@ -743,14 +723,16 @@ if (!win) {
           f.state = "bloom";
           f.timer=0;
           f.bloom.remove(f.aura);
-          beep1.play()
+          beep1.play();
+          f.goalTime = 600 + Math.floor(400*Math.random());
         } else {
           player.pollinated = true;
           bee.add(player.aura);
           f.state = "bloom";
           f.timer=0;
           f.bloom.remove(f.aura);
-          beep1.play()
+          beep1.play();
+          f.goalTime = 600 + Math.floor(400*Math.random());
         }
       }
     }
@@ -831,19 +813,6 @@ loop = function() {
 
   update();
   draw();
-
-  // if (i==3) {
-    
-  //   draw();
-  // }
-
-  
-
-  // context.drawImage(renderTarget.texture.mipmaps,0,0,pixelRatio*basescale*400,pixelRatio*basescale*240);
-
-
-
-  // call update when the browser is ready to draw again
   window.requestAnimationFrame(loop);
 
 
