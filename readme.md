@@ -26,3 +26,9 @@ You should now have intellisense for threejs in vscode even when just using scri
 A playable version of this game is here: https://paloblancogames.itch.io/pollinate-the-garden
 
 Thanks to Frank Poth for some great tutorials on game loops in javascript, and @lewy_blue for writing some great threejs materials.
+
+### Todo:
+- Fix slowdown when garden fills up by grouping common meshes into objects
+- clean up initializations and properly use init()
+- play with some textures and normal maps
+- get canvas to scale more nicely with user monitor size
