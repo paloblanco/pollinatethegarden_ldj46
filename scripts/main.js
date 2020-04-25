@@ -4,10 +4,11 @@
 
 /*
 ################
-INLINE RESOURCES
+INLINE GLOBAL RESOURCES
 ################
 */
 
+// canvas uses string colors
 var listColors = [
   "#000000", // 0 black
   "#1D2B53", // 1 dark blues
@@ -27,6 +28,7 @@ var listColors = [
   "#FFCCAA" ,// 15 purple
 ]
 
+// threejs uses hex for colors
 var listColorsHex = [
   0x000000, // 0 black
   0x1D2B53, // 1 dark blues
@@ -46,23 +48,15 @@ var listColorsHex = [
   0xFFCCAA, // 15 purple
 ]
 
-
-
-/*
-################
-DECLARATIONS
-################
-*/
-
-var context, controller, rectangle, loop, update, draw, ctx, offCanvas, pixelRatio;
-var baseheight, basewidth, basescale, colors;
-
-
 /*
 ################
 CANVAS SETUP
 ################
 */
+
+let context, controller, rectangle, loop, update, draw, ctx, offCanvas, pixelRatio;
+let baseheight, basewidth, basescale, colors;
+
 
 //VIRTUAL RESOLUTION
 
@@ -94,114 +88,148 @@ context.imageSmoothingEnabled = false;
 
 /*
 ################
+PRINTING SPRITE FONT
+################
+*/
+
+// FIX SPRITE SHEET
+var font_sheet = new Image();
+font_sheet.src = "data/pico8_font_white.png";
+
+var print = function(str, x, y) {
+  str = str.toUpperCase();
+  for (let ii=0; ii < str.length; ii++) {
+    let xsheet, ysheet;
+    let char = str[ii].charCodeAt(0);
+    if (char < 65) {
+      ysheet = 24;
+      xsheet = (char - 48)*8;
+    } else {
+      ysheet = 48 + 8*Math.floor((char - 64)/16);
+      xsheet = ((char - 64)%16)*8;
+    };
+    ctx.drawImage(font_sheet,xsheet,ysheet,8,8,x+8*ii,y,16,16);
+  }
+};
+
+/*
+################
+CONTROLLER
+################
+*/
+
+controller = {
+  left:false,
+  right:false,
+  up:false,
+  down:false,
+  keyListener:function(event) {
+    var key_state = (event.type == "keydown")?true:false;
+    switch(event.keyCode) {
+      case 37:// left key
+        controller.left = key_state;
+      break;
+      case 38:// up key
+        controller.up = key_state;
+      break;
+      case 39:// right key
+        controller.right = key_state;
+      break;
+      case 40:// down key
+        controller.down = key_state;
+      break;
+    }
+  }
+};
+
+window.addEventListener("keydown", function(e) {
+    // space and arrow keys
+    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+        e.preventDefault();
+    }
+}, false);
+ 
+
+/*
+################
 THREEJS SETUP
 ################
 */
 
 // these need to be accessed inside more than one function so we'll declare them first
-let container;
-let camera;
-let renderer;
-let scene;
-let mesh;
-let mesh2
-let bee;
+let camera, renderer, scene;
 
-// OFFSCREEN TARGET FOR 3D drawing
-threeCanvas = document.createElement("canvas");
-threeCanvas.width = basewidth;
-threeCanvas.height = baseheight;
-threeCanvas.style.imageRendering = "pixelated";
-ctxThree = offCanvas.getContext("2d");
-ctxThree.imageSmoothingEnabled = false;
+function initScene() {
+  // create a Scene
+  scene = new THREE.Scene();
+  // set the background color
+  scene.background = new THREE.Color(listColorsHex[12]);
 
-function init() {
+  // Create a Camera
+  const fov = 30; // AKA Field of View
+  const aspect = basewidth / baseheight;
+  const near = 0.1; // the near clipping plane
+  const far = 100; // the far clipping plane
+  camera = new THREE.PerspectiveCamera( fov, aspect, near, far );
 
-    // create a Scene
-    scene = new THREE.Scene();
-    // set the background color
-    scene.background = new THREE.Color(listColorsHex[12]);
+  // we'll move the camera back a bit so that we can view the scene
+  camera.position.set( 10, 3, 3 );
+  camera.lookAt(10,10,3);
 
-    //make the camera
-    // Create a Camera
-    const fov = 30; // AKA Field of View
-    const aspect = basewidth / baseheight;
-    const near = 0.1; // the near clipping plane
-    const far = 100; // the far clipping plane
-    camera = new THREE.PerspectiveCamera( fov, aspect, near, far );
+  // create a renderer
+  renderer = new THREE.WebGLRenderer({antialias: false});
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+  renderer.setSize( basewidth, baseheight );
 
-    // every object is initially created at ( 0, 0, 0 )
-    // we'll move the camera back a bit so that we can view the scene
-    camera.position.set( 10, 3, 3 );
-    camera.lookAt(10,10,3);
+  //add a light to the scene
+  //Create a PointLight and turn on shadows for the light
+  let light = new THREE.PointLight( 0xffffff, 1, 100 );
+  light.position.set( 10, 10, 30 );
+  light.castShadow = true;            // default false
+  scene.add( light );
 
-    // create a geometry
-    const geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
-    const geoFloor = new THREE.BoxBufferGeometry( 20, 20, 1 );
+  //Set up shadow properties for the light
+  light.shadow.mapSize.width = 128;  // default
+  light.shadow.mapSize.height = 128; // default
+  light.shadow.camera.near = 0.5;       // default
+  light.shadow.camera.far = 50      // default
 
-    // create a purple Basic material
-    const material = new THREE.MeshStandardMaterial( { color: listColorsHex[12] } );
-    const material2 = new THREE.MeshStandardMaterial( { color: listColorsHex[3] } );
+  //move the light, since its default position is 000
+  // light.position.set(2,-3,4);
 
-    // create a Mesh containing the geometry and material
-    mesh = new THREE.Mesh( geometry, material );
-    mesh2 = new THREE.Mesh( geoFloor, material2 );
-
-    // add the mesh to the scene
-    // scene.add( mesh );
-    scene.add( mesh2 );
-    mesh.position.set(10,10,1.5);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh2.position.set(10,10,0.5);
-    mesh2.castShadow = true;
-    mesh2.receiveShadow = true;
-
-    //add a light to the scene
-    // const light = new THREE.DirectionalLight(0xffffff, 1.0);
-    //Create a PointLight and turn on shadows for the light
-    var light = new THREE.PointLight( 0xffffff, 1, 100 );
-    light.position.set( 10, 10, 30 );
-    light.castShadow = true;            // default false
-    scene.add( light );
-
-    //Set up shadow properties for the light
-    light.shadow.mapSize.width = 128;  // default
-    light.shadow.mapSize.height = 128; // default
-    light.shadow.camera.near = 0.5;       // default
-    light.shadow.camera.far = 50      // default
-
-    //move the light, since its default position is 000
-    // light.position.set(2,-3,4);
-
-    //add the light to the scene
-    var lighta = new THREE.AmbientLight( 0x606060 ); // soft white light
-    scene.add(lighta);
-
-    // create a renderer
-    renderer = new THREE.WebGLRenderer({antialias: false});
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-    renderer.setSize( basewidth, baseheight );
+  //add the light to the scene
+  let lighta = new THREE.AmbientLight( 0x606060 ); // soft white light
+  scene.add(lighta);
 
 }
 
-init();
+// MESH INITIALIZATION
 
+let bee, beeAll;
 let legLeft, legRight, armLeft, armRight;
 let seed, sprout, bud, bloom, pollen, sprout2, aura, playerAura;
 
 function initMeshes() {
-  // used to build a train in section 1.6
+  // GARDEN FLOOR
+  const geoFloor = new THREE.BoxBufferGeometry( 20, 20, 1 );
+  const gardenFloorMaterial = new THREE.MeshStandardMaterial( { color: listColorsHex[3] } );
+  const gardenFloor = new THREE.Mesh( geoFloor, gardenFloorMaterial );
+
+  scene.add( gardenFloor );
+  gardenFloor.position.set(10,10,0.5);
+  gardenFloor.castShadow = true;
+  gardenFloor.receiveShadow = true;
+  
+  // BEE GROUPS
   bee = new THREE.Group();
-  // scene.add( bee );
+  bee.castShadow = true;
+  bee.receiveShadow = true;
 
   beeAll = new THREE.Group();
   scene.add(beeAll);
 
-  bee.castShadow = true;
-  bee.receiveShadow = true;
-
+  // MATERIALS
   const bodyMaterial = new THREE.MeshStandardMaterial({
       color: listColorsHex[10],
       flatShading: false,
@@ -215,32 +243,31 @@ function initMeshes() {
   const greenMaterial = new THREE.MeshStandardMaterial({
     color: listColorsHex[11],
     flatShading: false,
-});
+  });
 
   const yellowMaterial = new THREE.MeshStandardMaterial({
     color: listColorsHex[10],
     flatShading: true,
-});
+  });
 
   const pinkMaterial = new THREE.MeshStandardMaterial({
     color: listColorsHex[14],
     flatShading: true,
-});
-
-
+  });
 
   const darkMaterial = new THREE.MeshStandardMaterial({
     color: listColorsHex[0],
     flatShading: true,
-});
+  });
 
-const auraMaterial = new THREE.MeshStandardMaterial({
-  color: listColorsHex[9],
-  flatShading: true,
-  opacity:0.5,
-  transparent:true,
-});
+  const auraMaterial = new THREE.MeshStandardMaterial({
+    color: listColorsHex[9],
+    flatShading: true,
+    opacity:0.5,
+    transparent:true,
+  });
 
+  // MAKE THE BEE
   const bodyGeometry = new THREE.BoxBufferGeometry( 1,1,1 );
   const body = new THREE.Mesh( bodyGeometry, bodyMaterial, castShadow = true, receiveShadow = true );
   body.castShadow = true;
@@ -259,7 +286,6 @@ const auraMaterial = new THREE.MeshStandardMaterial({
   const wingGeometry = new THREE.CylinderBufferGeometry(.15,.15,.05);
   const wing = new THREE.Mesh(wingGeometry, detailMaterial);
 
-
   eyeLeft.position.set(-0.25,0.5,0.25);
   eyeRight.position.set(0.25,0.5,0.25);
   mouth.position.set(0.0,0.5,-0.25);
@@ -272,8 +298,6 @@ const auraMaterial = new THREE.MeshStandardMaterial({
   wing2 = wing.clone();
   wing2.position.set(0.35,0,0.65);
   wing2.rotation.y = Math.PI*0.25;
-
-
 
   legLeft.position.set(-0.25,0.0,-0.65);
   legLeft.scale.set(2,2,2);
@@ -304,14 +328,12 @@ const auraMaterial = new THREE.MeshStandardMaterial({
   seed.castShadow = true;
 
   sprout = new THREE.Group();
-  // scene.add(sprout);
   const stemGeometry = new THREE.CylinderBufferGeometry(0.05,0.05,0.5,4);
   const stem = new THREE.Mesh(stemGeometry, greenMaterial);
   stem.rotation.x = Math.PI/2;
-  // stem.castShadow = true;
+  stem.castShadow = true;
   const sproutTopGeometry = new THREE.SphereBufferGeometry(0.15,5,4);
-  const sproutTop = new THREE.Mesh(sproutTopGeometry, greenMaterial);
-  // sproutTop.castShadow = true;
+  const sproutTop = new THREE.Mesh(sproutTopGeometry, greenMaterial);  
   sproutTop.position.set(0,0,0.4);
   sproutTop.scale.set(1,1,2)
   const leafGeometry = new THREE.SphereBufferGeometry(0.05,5,4);
@@ -331,7 +353,6 @@ const auraMaterial = new THREE.MeshStandardMaterial({
 
   const flowerCenterGeometry = new THREE.SphereBufferGeometry(0.15,4,4);
   const flowerCenter = new THREE.Mesh(flowerCenterGeometry, yellowMaterial);
-  // flowerCenter.castShadow = true;
   flowerTop.add(flowerCenter);
 
   const flowerPetalGeometry = new THREE.SphereBufferGeometry(0.15,4,4);
@@ -358,26 +379,15 @@ const auraMaterial = new THREE.MeshStandardMaterial({
 
   const auraGeometry = new THREE.SphereBufferGeometry(1,4,4);
   aura = new THREE.Mesh(auraGeometry, auraMaterial);
-
   playerAura = aura.clone();
-  
-  // bloom.add(aura);
-  
-  
+
   bloom.add(stem.clone(), leaf.clone(), leaf2.clone(), leaf3.clone(), flowerTop);
   bloom.position.set(4,2,1.25);
-  // scene.add(bloom);
-
-  
-
-
-
-
 }
 
-initMeshes();
-
 // set up sounds
+let beep1, beep2, music;
+
 function sound(src) {
   this.sound = document.createElement("audio");
   this.sound.src = src;
@@ -393,13 +403,15 @@ function sound(src) {
   }
 };
 
-var beep1 = new sound("data/pollinate_0.wav");
-beep1.sound.volume=0.025;
-var beep2 = new sound("data/pollinate_1.wav");
-beep2.sound.volume=0.025;
-let music = new sound("data/LD46_Song.mp3");
-music.sound.loop = true;
-music.sound.volume = 0.5;
+function initSounds() {
+  beep1 = new sound("data/pollinate_0.wav");
+  beep1.sound.volume=0.025;
+  beep2 = new sound("data/pollinate_1.wav");
+  beep2.sound.volume=0.025;
+  music = new sound("data/LD46_Song.mp3");
+  music.sound.loop = true;
+  music.sound.volume = 0.5;
+}
 
 /*
 ################
@@ -484,85 +496,26 @@ class FlowerObj {
   }
 }
 
-for (let i=0; i<6; i++) {
-  allFlowers.push(new FlowerObj(0.5+20*Math.random(),0.5+19*Math.random()))
-}
-allFlowers[0].timer = 1000;
-
-/*
-################
-PRINTING SPRITE FONT
-################
-*/
-
-// FIX SPRITE SHEET
-var font_sheet = new Image();
-font_sheet.src = "data/pico8_font_white.png";
-
-var print = function(str, x, y) {
-  str = str.toUpperCase();
-  for (let ii=0; ii < str.length; ii++) {
-    let xsheet, ysheet;
-    let char = str[ii].charCodeAt(0);
-    if (char < 65) {
-      ysheet = 24;
-      xsheet = (char - 48)*8;
-    } else {
-      ysheet = 48 + 8*Math.floor((char - 64)/16);
-      xsheet = ((char - 64)%16)*8;
-    };
-    ctx.drawImage(font_sheet,xsheet,ysheet,8,8,x+8*ii,y,16,16);
+function initFlowers() {
+  for (let i=0; i<6; i++) {
+    allFlowers.push(new FlowerObj(0.5+20*Math.random(),0.5+19*Math.random()))
   }
-};
-
-
-
-/*
-################
-CONTROLLER
-################
-*/
-
-controller = {
-
-left:false,
-right:false,
-up:false,
-down:false,
-keyListener:function(event) {
-  var key_state = (event.type == "keydown")?true:false;
-  switch(event.keyCode) {
-    case 37:// left key
-      controller.left = key_state;
-    break;
-    case 38:// up key
-      controller.up = key_state;
-    break;
-    case 39:// right key
-      controller.right = key_state;
-    break;
-    case 40:// down key
-      controller.down = key_state;
-    break;
-  }
+  allFlowers[0].timer = 1000;
+  let bloom1 = new FlowerObj(player.x+4, player.y);
+  bloom1.state = "bloom";
+  scene.remove(bloom1.sprout);
+  bloom1.bloom = bloom.clone();
+  scene.add(bloom1.bloom);
+  bloom1.bloom.position.set(bloom1.x,bloom1.y,bloom1.z);
+  bloom1.timer = 700;
+  allFlowers.push(bloom1);
 }
-};
-
-window.addEventListener("keydown", function(e) {
-    // space and arrow keys
-    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
-        e.preventDefault();
-    }
-}, false);
 
 /*
 ################
-ENTITY CREATION
+PLAYER CREATION
 ################
 */
-
-
-
 
 var player = {
   height:1,
@@ -588,21 +541,6 @@ var player = {
   aura: playerAura,
 };
 
-let vectorUp = new THREE.Vector3(0,0,1);
-
-let bloom1 = new FlowerObj(player.x+4, player.y);
-bloom1.state = "bloom";
-scene.remove(bloom1.sprout);
-bloom1.bloom = bloom.clone();
-scene.add(bloom1.bloom);
-bloom1.bloom.position.set(bloom1.x,bloom1.y,bloom1.z);
-bloom1.timer = 700;
-
-allFlowers.push(bloom1);
-
-
-// thislevel = buildlevel(currentlevel);
-
 /*
 ################
 UPDATE
@@ -626,10 +564,13 @@ let win = false;
 let interacted=false;
 let musicOn=false;
 
-camera.position.x = player.x;
-camera.position.y = player.y-10;
-camera.position.z = player.z+4;
-camera.lookAt(player.x,player.y,player.z+1)
+function initCamera() {
+  camera.position.x = player.x;
+  camera.position.y = player.y-10;
+  camera.position.z = player.z+4;
+  camera.lookAt(player.x,player.y,player.z+1)  
+}
+
 
 update = function() {
 
@@ -697,7 +638,7 @@ update = function() {
   beeAll.position.x = player.x;
   beeAll.position.y = player.y;
   beeAll.position.z = player.z;
-  beeAll.setRotationFromAxisAngle(vectorUp,player.angle - Math.PI*0.5);
+  beeAll.rotation.z = player.angle - Math.PI*0.5;
 
   xAddGoal = 20*player.x_velocity_goal;
   xAdd += (xAddGoal - xAdd)/30
@@ -774,32 +715,26 @@ DRAW
 
 draw = function() {
 
-    ctx.fillStyle = listColors[6];
-    // ctx.fillRect(0, 0, 400, 240);// x, y, width, height
-    ctx.fillStyle = listColors[0];
+  ctx.fillStyle = listColors[6];
+  // ctx.fillRect(0, 0, 400, 240);// x, y, width, height
+  ctx.fillStyle = listColors[0];
 
-    renderer.render( scene, camera );
-    
+  renderer.render( scene, camera );
 
-    ctx.drawImage(renderer.domElement,0,0,400,240);
-    
+  ctx.drawImage(renderer.domElement,0,0,400,240);
 
+  print("pollinate the garden      progress: " + String(progress) + " of 150", 11,12);
+  print("time: " + String(Math.floor(globalTime/60)), 11,24);
 
-    print("pollinate the garden      progress: " + String(progress) + " of 150", 11,12);
-    print("time: " + String(Math.floor(globalTime/60)), 11,24);
+  if (win) {
+    print("You saved the garden", 60,100);
+    print("title: pollinate the garden", 100,120);
+    print("author: palo blanco games", 100,132);
+    print("thrown together for ldj46", 100,144);
+    print("Apr 20 2020", 100,156);
+  }
 
-    if (win) {
-      print("You saved the garden", 60,100);
-      print("title: pollinate the garden", 100,120);
-      print("author: palo blanco games", 100,132);
-      print("thrown together for ldj46", 100,144);
-      print("Apr 20 2020", 100,156);
-    }
-    
-
-    context.drawImage(offCanvas,0,0,pixelRatio*basescale*400,pixelRatio*basescale*240);
-
-    
+  context.drawImage(offCanvas,0,0,pixelRatio*basescale*400,pixelRatio*basescale*240);   
 }
 
 /*
@@ -808,15 +743,12 @@ MAIN LOOP
 ################
 */
 
+//init()
 
 loop = function() {
-
   update();
   draw();
   window.requestAnimationFrame(loop);
-
-
-
 };
 
 /*
@@ -824,6 +756,12 @@ loop = function() {
 SET UP LISTENERS AND START!
 ################
 */
+
+initScene();
+initMeshes();
+initSounds();
+initFlowers();
+initCamera();
 
 window.addEventListener("keydown", controller.keyListener);
 window.addEventListener("keyup", controller.keyListener);
