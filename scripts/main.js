@@ -4,10 +4,11 @@
 
 /*
 ################
-INLINE RESOURCES
+INLINE GLOBAL RESOURCES
 ################
 */
 
+// canvas uses string colors
 var listColors = [
   "#000000", // 0 black
   "#1D2B53", // 1 dark blues
@@ -27,6 +28,7 @@ var listColors = [
   "#FFCCAA" ,// 15 purple
 ]
 
+// threejs uses hex for colors
 var listColorsHex = [
   0x000000, // 0 black
   0x1D2B53, // 1 dark blues
@@ -46,23 +48,15 @@ var listColorsHex = [
   0xFFCCAA, // 15 purple
 ]
 
-
-
-/*
-################
-DECLARATIONS
-################
-*/
-
-var context, controller, rectangle, loop, update, draw, ctx, offCanvas, pixelRatio;
-var baseheight, basewidth, basescale, colors;
-
-
 /*
 ################
 CANVAS SETUP
 ################
 */
+
+let context, controller, rectangle, loop, update, draw, ctx, offCanvas, pixelRatio;
+let baseheight, basewidth, basescale, colors;
+
 
 //VIRTUAL RESOLUTION
 
@@ -99,100 +93,76 @@ THREEJS SETUP
 */
 
 // these need to be accessed inside more than one function so we'll declare them first
-let container;
-let camera;
-let renderer;
-let scene;
-let mesh;
-let mesh2
-let bee;
+let camera, renderer, scene;
 
-// OFFSCREEN TARGET FOR 3D drawing
-threeCanvas = document.createElement("canvas");
-threeCanvas.width = basewidth;
-threeCanvas.height = baseheight;
-threeCanvas.style.imageRendering = "pixelated";
-ctxThree = offCanvas.getContext("2d");
-ctxThree.imageSmoothingEnabled = false;
+function initScene() {
+  // create a Scene
+  scene = new THREE.Scene();
+  // set the background color
+  scene.background = new THREE.Color(listColorsHex[12]);
 
-function init() {
+  // Create a Camera
+  const fov = 30; // AKA Field of View
+  const aspect = basewidth / baseheight;
+  const near = 0.1; // the near clipping plane
+  const far = 100; // the far clipping plane
+  camera = new THREE.PerspectiveCamera( fov, aspect, near, far );
 
-    // create a Scene
-    scene = new THREE.Scene();
-    // set the background color
-    scene.background = new THREE.Color(listColorsHex[12]);
+  // we'll move the camera back a bit so that we can view the scene
+  camera.position.set( 10, 3, 3 );
+  camera.lookAt(10,10,3);
 
-    //make the camera
-    // Create a Camera
-    const fov = 30; // AKA Field of View
-    const aspect = basewidth / baseheight;
-    const near = 0.1; // the near clipping plane
-    const far = 100; // the far clipping plane
-    camera = new THREE.PerspectiveCamera( fov, aspect, near, far );
+  // create a renderer
+  renderer = new THREE.WebGLRenderer({antialias: false});
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+  renderer.setSize( basewidth, baseheight );
 
-    // every object is initially created at ( 0, 0, 0 )
-    // we'll move the camera back a bit so that we can view the scene
-    camera.position.set( 10, 3, 3 );
-    camera.lookAt(10,10,3);
+  //add a light to the scene
+  //Create a PointLight and turn on shadows for the light
+  let light = new THREE.PointLight( 0xffffff, 1, 100 );
+  light.position.set( 10, 10, 30 );
+  light.castShadow = true;            // default false
+  scene.add( light );
 
-    // create a geometry
-    const geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
-    const geoFloor = new THREE.BoxBufferGeometry( 20, 20, 1 );
+  //Set up shadow properties for the light
+  light.shadow.mapSize.width = 128;  // default
+  light.shadow.mapSize.height = 128; // default
+  light.shadow.camera.near = 0.5;       // default
+  light.shadow.camera.far = 50      // default
 
-    // create a purple Basic material
-    const material = new THREE.MeshStandardMaterial( { color: listColorsHex[12] } );
-    const material2 = new THREE.MeshStandardMaterial( { color: listColorsHex[3] } );
+  //move the light, since its default position is 000
+  // light.position.set(2,-3,4);
 
-    // create a Mesh containing the geometry and material
-    mesh = new THREE.Mesh( geometry, material );
-    mesh2 = new THREE.Mesh( geoFloor, material2 );
-
-    // add the mesh to the scene
-    // scene.add( mesh );
-    scene.add( mesh2 );
-    mesh.position.set(10,10,1.5);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh2.position.set(10,10,0.5);
-    mesh2.castShadow = true;
-    mesh2.receiveShadow = true;
-
-    //add a light to the scene
-    // const light = new THREE.DirectionalLight(0xffffff, 1.0);
-    //Create a PointLight and turn on shadows for the light
-    var light = new THREE.PointLight( 0xffffff, 1, 100 );
-    light.position.set( 10, 10, 30 );
-    light.castShadow = true;            // default false
-    scene.add( light );
-
-    //Set up shadow properties for the light
-    light.shadow.mapSize.width = 128;  // default
-    light.shadow.mapSize.height = 128; // default
-    light.shadow.camera.near = 0.5;       // default
-    light.shadow.camera.far = 50      // default
-
-    //move the light, since its default position is 000
-    // light.position.set(2,-3,4);
-
-    //add the light to the scene
-    var lighta = new THREE.AmbientLight( 0x606060 ); // soft white light
-    scene.add(lighta);
-
-    // create a renderer
-    renderer = new THREE.WebGLRenderer({antialias: false});
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-    renderer.setSize( basewidth, baseheight );
+  //add the light to the scene
+  let lighta = new THREE.AmbientLight( 0x606060 ); // soft white light
+  scene.add(lighta);
 
 }
 
-init();
+initScene();
 
+let bee, beeAll;
 let legLeft, legRight, armLeft, armRight;
 let seed, sprout, bud, bloom, pollen, sprout2, aura, playerAura;
 
 function initMeshes() {
-  // used to build a train in section 1.6
+  // GARDEN FLOOR
+  const geoFloor = new THREE.BoxBufferGeometry( 20, 20, 1 );
+
+  // create a purple Basic material
+  const gardenFloorMaterial = new THREE.MeshStandardMaterial( { color: listColorsHex[3] } );
+
+  // create a Mesh containing the geometry and material
+  const gardenFloor = new THREE.Mesh( geoFloor, gardenFloorMaterial );
+
+  // add the mesh to the scene
+  // scene.add( mesh );
+  scene.add( gardenFloor );
+  gardenFloor.position.set(10,10,0.5);
+  gardenFloor.castShadow = true;
+  gardenFloor.receiveShadow = true;
+  
   bee = new THREE.Group();
   // scene.add( bee );
 
@@ -808,15 +778,12 @@ MAIN LOOP
 ################
 */
 
+//init()
 
 loop = function() {
-
   update();
   draw();
   window.requestAnimationFrame(loop);
-
-
-
 };
 
 /*
